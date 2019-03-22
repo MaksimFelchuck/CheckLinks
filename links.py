@@ -26,16 +26,18 @@ def Check(url, links, static_files):
     for link in links:
         try:
             resp = urllib.request.urlopen(url)
-            print(link + '  -Успешно')
-        except:
-            print(link+ '   -404 File not found')
+            print(link + '(Успешно)')
+        except urllib.error.HTTPError:
+            print(link+ '(404 File not found)')
+            
             
     for link in static_files:
         try:
             resp = urllib.request.urlopen(url+link)
-            print(link + '  -Успешно')
-        except:
-            print(link+ '   -404 File not found')
+            print(link + '(Успешно)')
+        except urllib.error.HTTPError:
+            print(link+ '(404 File not found)')
+            
     
 if '__main__':
     url = input('Введите ссылку на сайт: ')
