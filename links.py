@@ -1,5 +1,7 @@
 from bs4 import BeautifulSoup
 import urllib.request
+import traceback
+import sys
 
 def Get_links(url):
     resp = urllib.request.urlopen(url)
@@ -27,20 +29,20 @@ def Check(url, links, static_files):
         try:
             resp = urllib.request.urlopen(url)
             print(link + '(Успешно)')
-        except urllib.error.HTTPError:
-            print(link+ '(404 File not found)')
+        except Exception as err:
+            print(link+ " (Ошибка - {0})".format(err))
             
             
     for link in static_files:
         try:
             resp = urllib.request.urlopen(url+link)
             print(link + '(Успешно)')
-        except urllib.error.HTTPError:
-            print(link+ '(404 File not found)')
+        except Exception as err:
+            print(link+ " (Ошибка - {0})".format(err))
             
     
 if '__main__':
-    url = input('Введите ссылку на сайт: ')
-    links = Get_links(url)
+    
+    links = Get_links(sys.argv[1])
     
     
