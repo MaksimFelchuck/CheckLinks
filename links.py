@@ -6,7 +6,9 @@ def Start(url, link, depth, is_link):
 
     if link == '':
         links, static_files = Get_links(url)
+        print('Проверка - ' + url + '\n --------------------')
         Check(url, links, static_files, depth-1, is_link)
+        print('\n --------------------')
     else:
         print('Проверка - ' + link + '\n --------------------')
         links, static_files = Get_links(url+link)
@@ -39,10 +41,12 @@ def Check(url,links, static_files, depth, is_link):
     print('(STATIC):')       
     for link in static_files:
         try:
-             
+            if ('https://' in link) or ('.com' in link):
+                resp = urllib.request.urlopen(link)
+            else:
+                resp = urllib.request.urlopen(url + link)
+            print(link + '(Успешно)')     
         
-            resp = urllib.request.urlopen(url+link)
-            print(link + '(Успешно)')
 
         except Exception as err:
             print(link+ " (Ошибка - {0})".format(err))
@@ -57,8 +61,12 @@ def Check(url,links, static_files, depth, is_link):
             print(link + '(Успешно)')
             
             
-            if depth != 0 and ('.html' in link) and is_link =='-i':
+            if depth != 0 and ('.html' in link):
                 Start(url, link, depth, is_link)
+            if depth != 0 and is_link =='-e' and ('.html' not in link):
+      
+                Start(link, '', depth, is_link)
+
         except Exception as err:
             print(link+ " (Ошибка - {0})".format(err))
             
