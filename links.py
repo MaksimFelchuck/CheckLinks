@@ -69,19 +69,22 @@ def check_e(url, links, static_files, depth, is_link, invalid_links, valid_links
                 try:
                     resp = urllib.request.urlopen(link)
                     valid_links[link] = 'external'
+                    if depth != 0:
+                        start(link, '', depth, is_link, invalid_links, valid_links, False, path)
 
                 except:
                     resp = urllib.request.urlopen(url + '/' + link)
                     valid_links[link] = 'internal'
-            if depth != 0:
-                start(url, link, depth, is_link, invalid_links, valid_links, False, path)
+                    if depth != 0:
+                        start(url, link, depth, is_link, invalid_links, valid_links, False, path)
+            
 
         except Exception as err:
 
             invalid_links[link] = (err, url, path)
     if main:
         end_status(url, valid_links, invalid_links)
-        
+
 def check_i(url, links, static_files, depth, is_link, invalid_links, valid_links, main, path):
     for link in static_files:
         try:
@@ -131,7 +134,7 @@ def end_status(url, valid_links, invalid_links):
 
     
 if '__main__':
-    #try:
+
 
     par = ['-e','-i']
 
