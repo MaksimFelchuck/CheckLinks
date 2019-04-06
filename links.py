@@ -2,96 +2,152 @@ from bs4 import BeautifulSoup
 import urllib.request
 import traceback
 import sys
-def Start(url, link, depth, is_link):
-
-    if link == '':
-        links, static_files = Get_links(url)
-        print('Проверка - ' + url + '\n --------------------')
-        Check(url, links, static_files, depth-1, is_link)
+def start(url, link, depth, is_link, invalid_links, valid_links, main, path):
+    if is_link == '-i' and main == True:
+        path.append(url)
+        links,static_files = get_links(url)
+        print('Checking ' + url + '...')
+        check_i(url, links, static_files, depth-1, is_link, invalid_links, valid_links, True, path)
         print('\n --------------------')
-    else:
-        print('Проверка - ' + link + '\n --------------------')
-        links, static_files = Get_links(url+link)
-        Check(url, links, static_files, depth-1, is_link)
+    elif is_link == '-i' and main == False:
+        links, static_files = get_links(url + '/' + link)
+        path.append(link)
+        check_i(url, links, static_files, depth-1, is_link, invalid_links, valid_links, False, path)
+    elif is_link == '-e' and main == True:
+        path.append(url)
+        links,static_files = get_links(url)
+        print('Checking ' + url + '...')
+        check_e(url, links, static_files, depth-1, is_link, invalid_links, valid_links, True, path)
         print('\n --------------------')
+    elif is_link == '-i' and main == False:
+        links, static_files = get_links(url + '/' + link)
+        path.append(link)
+        check_e(url, links, static_files, depth-1, is_link, invalid_links, valid_links, False, path)
         
-def Get_links(url):
+def get_links(url):
+
     resp = urllib.request.urlopen(url)
     soup = BeautifulSoup(resp, 'html.parser')
     static_files = []
     links = []
-    
-    
     for link in soup.find_all('a', href=True):
-        links.append(link['href'])
-    static_files.append('dlya_oshibki')   
+            links.append(link['href'])
     for link in soup.find_all('link', href=True):
-        static_files.append(link['href'])
-       
+            static_files.append(link['href'])
+               
     for link in soup.find_all('img', src=True):
-        static_files.append(link['src'])
-        
+            static_files.append(link['src'])
+                
     for link in soup.find_all('script', src=True):
-        static_files.append(link['src'])
-    
-    return links, static_files;
-    
+            static_files.append(link['src'])
 
-def Check(url,links, static_files, depth, is_link):
-    print('(STATIC):')       
+    static_files.append('owibka')
+    static_files.append('owibka')
+    links.append('owibka2')
+    static_files.append('owibka2')
+
+    return links, static_files
+
+def check_e(url, links, static_files, depth, is_link, invalid_links, valid_links, main, path):
     for link in static_files:
         try:
-            if ('https://' in link) or ('.com' in link):
-                resp = urllib.request.urlopen(link)
-            else:
-                resp = urllib.request.urlopen(url + link)
-            print(link + '(Успешно)')     
-        
+            if (link not in valid_links) and (link not in invalid_links):
+                try:
+                    resp = urllib.request.urlopen(link)
+                    valid_links[link] = 'external'
+
+                except:
+                    resp = urllib.request.urlopen(url + '/' + link)
+                    valid_links[link] = 'internal'
 
         except Exception as err:
-            print(link+ " (Ошибка - {0})".format(err))
-    
-    print('(LINKS):')
+            invalid_links[link] = (err, url, path)
+
     for link in links:
         try:
-            if '.html' in link:
-                resp = urllib.request.urlopen(url + link)
-            else:
-                resp = urllib.request.urlopen(link)
-            print(link + '(Успешно)')
-            
-            
-            if depth != 0 and ('.html' in link):
-                Start(url, link, depth, is_link)
-            if depth != 0 and is_link =='-e' and ('.html' not in link):
-      
-                Start(link, '', depth, is_link)
+            if (link not in valid_links) and (link not in invalid_links):
+                try:
+                    resp = urllib.request.urlopen(link)
+                    valid_links[link] = 'external'
+
+                except:
+                    resp = urllib.request.urlopen(url + '/' + link)
+                    valid_links[link] = 'internal'
+            if depth != 0:
+                start(url, link, depth, is_link, invalid_links, valid_links, False, path)
 
         except Exception as err:
-            print(link+ " (Ошибка - {0})".format(err))
-            
 
+            invalid_links[link] = (err, url, path)
+    if main:
+        end_status(url, valid_links, invalid_links)
+        
+def check_i(url, links, static_files, depth, is_link, invalid_links, valid_links, main, path):
+    for link in static_files:
+        try:
+            if (link not in valid_links) and (link not in invalid_links):
+                try:
+                    resp = urllib.request.urlopen(link)
+                    valid_links[link] = 'external'
+
+                except:
+                    resp = urllib.request.urlopen(url + '/' + link)
+                    valid_links[link] = 'internal'
+
+        except Exception as err:
+
+            invalid_links[link] = (err, url, path)
+
+    for link in links:
+        if ('.html' in link) and (link not in valid_links) and (link not in invalid_links):
+            try:
+                resp = urllib.request.urlopen(url + '/' + link)
+                valid_links[link] = 'internal'
+            except Exception as err:
+                invalid_links[link] = (err, url, path)
+
+            if depth != 0:
+                start(url, link, depth, is_link, invalid_links, valid_links, False, path)
+    if main:
+        end_status(url, valid_links, invalid_links)
+
+def end_status(url, valid_links, invalid_links):
+
+    print('\nURLs on {0} checked, all links work.Valid URLs: \n'.format(url))
+    for key, value in valid_links.items():
+        if value == 'internal':
+            print(url + '/' + key)
+        else:
+            print(key)
+    print('\nWeb site: {0} has invalid URLs:'.format(url))
+    for key, value in invalid_links.items():
+        print('\n' + key)
+        print('Error: ({0})'.format(value[0]))
+        for i in value[2]:
+            if i != url:
+                print(url + '/' + i)
+            else:
+                print (url)
 
     
 if '__main__':
-    try:
+    #try:
 
-        par = ['-e','-i']
+    par = ['-e','-i']
 
 
-        if int(sys.argv[2])>0 and (sys.argv[3] in par):
-            Start(sys.argv[1],'', int(sys.argv[2]), sys.argv[3])
-        elif int(sys.argv[2])<1:
-            print('Глубина должна быть > 0')
-        else:
-            print('''Введите: 
-                  -e, проверить внешние и внутренние ссылки
-                  -i, только внутренние
+    if int(sys.argv[2])>0 and (sys.argv[3] in par):
+        start(sys.argv[1],'', int(sys.argv[2]), sys.argv[3],{},{}, True, [])
+    elif int(sys.argv[2])<1:
+        print('depth should be > 0')
+    else:
+        print('''Input: 
+                  -e, check external and internal links
+                  -i, check only internal links
                   ''')
-
-    except Exception as err:
-        print(" (Ошибка - {0})".format(err))
-        print('Не правельно введены параметры \n (ссылка на сайт) (глубина проверки > 0) (выбор проверки внешних и внутренних ссылок)')
+    #except Exception as err:
+     #   print(" (Error - {0})".format(err))
+      #  print('Incorrect parameters \n (url) (depth > 0) (check external or internal links)')
 
         
     
