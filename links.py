@@ -41,11 +41,6 @@ def get_links(url):
     for link in soup.find_all('script', src=True):
             static_files.append(link['src'])
 
-    static_files.append('owibka')
-    static_files.append('owibka')
-    links.append('owibka2')
-    static_files.append('owibka2')
-
     return links, static_files
 
 def check_e(url, links, static_files, depth, is_link, invalid_links, valid_links, main, path):
@@ -137,20 +132,29 @@ if '__main__':
 
 
     par = ['-e','-i']
+    try:
+        
+        if sys.argv[0] == '--help':
+            print('''
+        <link>                     Site link
+        -i                         Check only internal links
+        -e                         Check internal and external links
+        <depth>                    Site check depth''')
 
+        if int(sys.argv[2])>0 and (sys.argv[3] in par):
+            start(sys.argv[1],'', int(sys.argv[2]), sys.argv[3],{},{}, True, [])
+        elif int(sys.argv[2])<1:
+            print('fatal: depth should be > 0')
+        else:
+            print("""
+fatal: unknown parameter
 
-    if int(sys.argv[2])>0 and (sys.argv[3] in par):
-        start(sys.argv[1],'', int(sys.argv[2]), sys.argv[3],{},{}, True, [])
-    elif int(sys.argv[2])<1:
-        print('depth should be > 0')
-    else:
-        print('''Input: 
-                  -e, check external and internal links
-                  -i, check only internal links
-                  ''')
-    #except Exception as err:
-     #   print(" (Error - {0})".format(err))
-      #  print('Incorrect parameters \n (url) (depth > 0) (check external or internal links)')
+usage: [depth] [-i] [-e]
+        <link> [<agrs>]""")
+    except:
+        print("""
+usage: [depth] [-i] [-e]
+        <link> [<agrs>]""")
 
         
     
